@@ -11,12 +11,10 @@ const Auth = ({ onClose, onLoginSuccess }) => {
     phone: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Predefined credentials
-  const VALID_EMAIL = 'gnanesh@gmail.com';
-  const VALID_PASSWORD = 'Gnanesh';
-  const ADMIN_EMAIL = '2300031699@gmail.com';
-  const ADMIN_PASSWORD = 'gncgncgnc';
+  // Backend API URL
+  const API_URL = 'http://localhost:1699/api/users';
 
   const handleChange = (e) => {
     setFormData({
@@ -26,43 +24,83 @@ const Auth = ({ onClose, onLoginSuccess }) => {
     setError(''); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
-    if (isLogin) {
-      // Admin login check
-      if (formData.email === ADMIN_EMAIL && formData.password === ADMIN_PASSWORD) {
-        console.log('Admin login successful!');
-        const adminName = formData.email.split('@')[0]; // Extract name from email
-        onLoginSuccess('admin', adminName, formData.email);
-      }
-      // Regular user login check
-      else if (formData.email === VALID_EMAIL && formData.password === VALID_PASSWORD) {
-        console.log('Login successful!');
-        onLoginSuccess('user', 'Gnanesh', formData.email);
+    try {
+      if (isLogin) {
+        // Login logic - call backend API
+        const response = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('Login successful!', data.user);
+          // Pass role, name, and email to parent component
+          onLoginSuccess(data.user.role, data.user.name, data.user.email);
+        } else {
+          setError(data.message || 'Invalid credentials!');
+        }
       } else {
-        setError('Invalid credentials! Only registered accounts can login. Please register first or use valid credentials.');
+        // Register logic - call backend API
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match!');
+          setLoading(false);
+          return;
+        }
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters long.');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: 'user' // Default role
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('Registration successful!', data.user);
+          alert('Registration successful! You can now login.');
+          setIsLogin(true);
+          setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            phone: ''
+          });
+        } else {
+          setError(data.message || 'Registration failed!');
+        }
       }
-    } else {
-      // Register logic
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match!');
-        return;
-      }
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters long.');
-        return;
-      }
-      console.log('Register:', formData);
-      alert('Registration successful! You can now login.');
-      setIsLogin(true);
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        phone: ''
-      });
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Unable to connect to server. Please make sure the backend is running on port 1699.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -179,8 +217,8 @@ const Auth = ({ onClose, onLoginSuccess }) => {
               </div>
             )}
 
-            <button type="submit" className="submit-btn">
-              {isLogin ? 'Login' : 'Register'}
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
             </button>
           </form>
 

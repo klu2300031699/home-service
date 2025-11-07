@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Home.css';
 
 const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
@@ -46,218 +46,38 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
   const [editingService, setEditingService] = useState(null);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'user', joinDate: new Date().toISOString().split('T')[0], bookings: 0 });
   const [newService, setNewService] = useState({ title: '', category: '', badge: 'New', badgeColor: 'blue', rating: 5.0, reviews: 0, price: '', description: '', features: [] });
-  const [allServices, setAllServices] = useState([
-    {
-      id: 1,
-      title: 'Professional Plumbing',
-      image: '/plumbing.jpg',
-      category: 'Repair',
-      badge: 'Popular',
-      badgeColor: 'blue',
-      rating: 4.8,
-      reviews: 245,
-      price: '$50 - $200',
-      description: 'Expert leak fixes & installations. Professional plumbing solutions with advanced equipment and experienced technicians.',
-      features: ['Emergency service', 'Leak detection', 'Pipe installation', 'Water heater repair']
-    },
-    {
-      id: 2,
-      title: 'Electrical Services',
-      image: '/electical.jpg',
-      category: 'Repair',
-      badge: 'Popular',
-      badgeColor: 'yellow',
-      rating: 4.9,
-      reviews: 312,
-      price: '$75 - $300',
-      description: 'Wiring, repair & safety checks. Licensed electricians providing safe and reliable electrical solutions.',
-      features: ['Wiring & rewiring', 'Circuit breaker repair', 'Safety inspections', 'Outlet installation']
-    },
-    {
-      id: 3,
-      title: 'Home Deep Cleaning',
-      image: '/deep cleaning.jpg',
-      category: 'Cleaning',
-      badge: 'Trending',
-      badgeColor: 'green',
-      rating: 4.7,
-      reviews: 428,
-      price: '$40 - $150',
-      description: 'Spotless, healthier living spaces. Transform your home with our professional deep cleaning services.',
-      features: ['Deep carpet cleaning', 'Kitchen sanitization', 'Bathroom cleaning', 'Window washing']
-    },
-    {
-      id: 4,
-      title: 'AC & HVAC Services',
-      image: '/ac.jpg',
-      category: 'Repair',
-      badge: 'Hot',
-      badgeColor: 'orange',
-      rating: 4.8,
-      reviews: 189,
-      price: '$60 - $250',
-      description: 'Experienced HVAC technicians for AC cooling and heating needs, ensuring comfort year-round.',
-      features: ['AC repair & service', 'Installation', 'Maintenance', 'Emergency cooling']
-    },
-    {
-      id: 5,
-      title: 'Professional Painting',
-      image: '/painting.jpg',
-      category: 'Renovation',
-      badge: 'Popular',
-      badgeColor: 'pink',
-      rating: 4.6,
-      reviews: 156,
-      price: '$100 - $500',
-      description: 'Professional painting services for interior, with creative color consultations and quality finishes.',
-      features: ['Interior painting', 'Exterior painting', 'Color consultation', 'Wall preparation']
-    },
-    {
-      id: 6,
-      title: 'Carpentry & Woodwork',
-      image: '/carpentry.jpg',
-      category: 'Renovation',
-      badge: 'Featured',
-      badgeColor: 'orange',
-      rating: 4.7,
-      reviews: 203,
-      price: '$80 - $350',
-      description: 'Skilled carpenter services for expert furniture, cabinet installation, and custom woodworking projects.',
-      features: ['Custom furniture', 'Cabinet installation', 'Door repair', 'Wood refinishing']
-    },
-    {
-      id: 7,
-      title: 'Smart Home Installation',
-      image: '/smart.jpg',
-      category: 'Technology',
-      badge: 'New',
-      badgeColor: 'purple',
-      rating: 4.9,
-      reviews: 134,
-      price: '$150 - $600',
-      description: 'Expert smart home and security systems for modern connected living with automation.',
-      features: ['Smart device setup', 'Home automation', 'Voice control', 'App integration']
-    },
-    {
-      id: 8,
-      title: 'Bathroom Renovation',
-      image: '/bath.jpg',
-      category: 'Renovation',
-      badge: 'Premium',
-      badgeColor: 'teal',
-      rating: 4.8,
-      reviews: 267,
-      price: '$500 - $3000',
-      description: 'Complete bathroom transformation with modern fixtures, tiling, and custom design services.',
-      features: ['Complete remodeling', 'Fixture installation', 'Tiling', 'Modern design']
-    },
-    {
-      id: 9,
-      title: 'Flooring Solutions',
-      image: '/flooring.jpg',
-      category: 'Renovation',
-      badge: 'Quality',
-      badgeColor: 'gray',
-      rating: 4.7,
-      reviews: 198,
-      price: '$200 - $1500',
-      description: 'Professional flooring installation including hardwood, tile, carpet, and laminate options.',
-      features: ['Hardwood installation', 'Tile flooring', 'Carpet fitting', 'Floor refinishing']
-    },
-    {
-      id: 10,
-      title: 'Kitchen Appliance Repair',
-      image: '/kit.jpg',
-      category: 'Repair',
-      badge: 'Fast',
-      badgeColor: 'blue',
-      rating: 4.6,
-      reviews: 289,
-      price: '$55 - $220',
-      description: 'On-site kitchen repairs. Quick and reliable appliance repair services for all major brands.',
-      features: ['Refrigerator repair', 'Oven servicing', 'Dishwasher fix', 'Same-day service']
-    },
-    {
-      id: 11,
-      title: 'Garden & Landscaping',
-      image: '/garden.jpg',
-      category: 'Outdoor',
-      badge: 'Eco',
-      badgeColor: 'green',
-      rating: 4.5,
-      reviews: 176,
-      price: '$90 - $400',
-      description: 'Transform outdoor spaces with professional landscaping, garden design, and lawn maintenance.',
-      features: ['Lawn maintenance', 'Garden design', 'Tree trimming', 'Irrigation systems']
-    },
-    {
-      id: 12,
-      title: 'Roofing & Gutter Service',
-      image: '/roof.jpg',
-      category: 'Repair',
-      badge: 'Trusted',
-      badgeColor: 'gray',
-      rating: 4.8,
-      reviews: 145,
-      price: '$150 - $800',
-      description: 'Professional roofing and gutter cleaning services with quality materials and expert workmanship.',
-      features: ['Roof repair', 'Gutter cleaning', 'Leak fixing', 'Inspection']
-    },
-    {
-      id: 13,
-      title: 'Window Installation & Repair',
-      image: '/wind.jpg',
-      category: 'Repair',
-      badge: 'Quality',
-      badgeColor: 'gray',
-      rating: 4.7,
-      reviews: 167,
-      price: '$100 - $500',
-      description: 'Complete window services including installation, repair, and energy-efficient replacements.',
-      features: ['Window replacement', 'Glass repair', 'Energy efficient', 'Custom sizes']
-    },
-    {
-      id: 14,
-      title: 'Security System Installation',
-      image: '/sec.jpg',
-      category: 'Technology',
-      badge: 'Premium',
-      badgeColor: 'red',
-      rating: 4.9,
-      reviews: 203,
-      price: '$200 - $1000',
-      description: 'Complete home security system installation including cameras, sensors, and 24/7 monitoring.',
-      features: ['CCTV installation', 'Alarm systems', '24/7 monitoring', 'Smart locks']
-    },
-    {
-      id: 17,
-      title: 'Handyman Services',
-      image: '/man.jpg',
-      category: 'General',
-      badge: 'Versatile',
-      badgeColor: 'gray',
-      rating: 4.8,
-      reviews: 312,
-      price: '$40 - $150',
-      description: 'All-in-one handyman services for minor repairs, installations, and home improvement tasks.',
-      features: ['Minor repairs', 'Furniture assembly', 'TV mounting', 'General fixes']
-    },
-    {
-      id: 18,
-      title: 'Pool Maintenance',
-      image: '/pool.jpg',
-      category: 'Outdoor',
-      badge: 'Summer',
-      badgeColor: 'blue',
-      rating: 4.5,
-      reviews: 127,
-      price: '$70 - $250',
-      description: 'Professional pool cleaning, maintenance, and repair services for crystal clear water.',
-      features: ['Pool cleaning', 'Chemical balance', 'Equipment repair', 'Regular maintenance']
-    }
-  ]);
+  const [allServices, setAllServices] = useState([]);
 
   const categories = ['All Categories', 'Repair', 'Cleaning', 'Renovation', 'Technology', 'Outdoor', 'General'];
+
+  // fetch services from backend and normalize to frontend shape
+  useEffect(() => {
+    const API_BASE = 'http://localhost:8080/api';
+    fetch(`${API_BASE}/services`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Failed to load services');
+        return res.json();
+      })
+      .then((data) => {
+        const normalized = data.map((s) => ({
+          id: s.id,
+          title: s.title || '',
+          image: s.image || '/service-default.jpg',
+          category: s.category || 'General',
+          badge: s.featured ? 'Featured' : 'New',
+          badgeColor: 'blue',
+          rating: s.rating || 4.5,
+          reviews: s.reviews || 0,
+          price: s.price != null ? `$${s.price}` : '$0',
+          description: s.longDescription || s.shortDescription || '',
+          features: s.features || s.includes || []
+        }));
+        setAllServices(normalized);
+      })
+      .catch((err) => {
+        console.error('Error fetching services', err);
+      });
+  }, []);
 
   // Get top 5 services by rating for home page
   const topRatedServices = [...allServices]
