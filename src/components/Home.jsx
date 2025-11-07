@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Home.css';
 
 const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
+  // Backend API URL
+  const API_URL = 'http://localhost:1699/api/services';
   const [searchData, setSearchData] = useState({
     serviceName: '',
     serviceType: '',
@@ -47,37 +49,29 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'user', joinDate: new Date().toISOString().split('T')[0], bookings: 0 });
   const [newService, setNewService] = useState({ title: '', category: '', badge: 'New', badgeColor: 'blue', rating: 5.0, reviews: 0, price: '', description: '', features: [] });
   const [allServices, setAllServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+
+  // Fetch services from backend on component mount
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      setServicesLoading(true);
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setAllServices(data);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      // Fallback to empty array if backend is not available
+      setAllServices([]);
+    } finally {
+      setServicesLoading(false);
+    }
+  };
 
   const categories = ['All Categories', 'Repair', 'Cleaning', 'Renovation', 'Technology', 'Outdoor', 'General'];
-
-  // fetch services from backend and normalize to frontend shape
-  useEffect(() => {
-    const API_BASE = 'http://localhost:8080/api';
-    fetch(`${API_BASE}/services`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Failed to load services');
-        return res.json();
-      })
-      .then((data) => {
-        const normalized = data.map((s) => ({
-          id: s.id,
-          title: s.title || '',
-          image: s.image || '/service-default.jpg',
-          category: s.category || 'General',
-          badge: s.featured ? 'Featured' : 'New',
-          badgeColor: 'blue',
-          rating: s.rating || 4.5,
-          reviews: s.reviews || 0,
-          price: s.price != null ? `$${s.price}` : '$0',
-          description: s.longDescription || s.shortDescription || '',
-          features: s.features || s.includes || []
-        }));
-        setAllServices(normalized);
-      })
-      .catch((err) => {
-        console.error('Error fetching services', err);
-      });
-  }, []);
 
   // Get top 5 services by rating for home page
   const topRatedServices = [...allServices]
@@ -274,9 +268,19 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
     }
   };
 
-  const handleDeleteService = (serviceId) => {
+  const handleDeleteService = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
-      setAllServices(prev => prev.filter(service => service.id !== serviceId));
+      try {
+        await fetch(`${API_URL}/${serviceId}`, {
+          method: 'DELETE'
+        });
+        // Refresh services from backend
+        fetchServices();
+        alert('Service deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        alert('Failed to delete service. Please try again.');
+      }
     }
   };
 
@@ -311,24 +315,48 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
     setShowEditServiceModal(true);
   };
 
-  const handleSaveService = () => {
-    setAllServices(prev => prev.map(service => 
-      service.id === editingService.id ? editingService : service
-    ));
-    setShowEditServiceModal(false);
-    setEditingService(null);
+  const handleSaveService = async () => {
+    try {
+      await fetch(`${API_URL}/${editingService.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingService)
+      });
+      // Refresh services from backend
+      fetchServices();
+      setShowEditServiceModal(false);
+      setEditingService(null);
+      alert('Service updated successfully!');
+    } catch (error) {
+      console.error('Error updating service:', error);
+      alert('Failed to update service. Please try again.');
+    }
   };
 
-  const handleAddService = () => {
-    const newId = Math.max(...allServices.map(s => s.id), 0) + 1;
-    setAllServices(prev => [...prev, { 
-      ...newService, 
-      id: newId,
-      image: '/service-default.jpg',
-      features: newService.features.filter(f => f.trim() !== '')
-    }]);
-    setShowAddServiceModal(false);
-    setNewService({ title: '', category: '', badge: 'New', badgeColor: 'blue', rating: 5.0, reviews: 0, price: '', description: '', features: [] });
+  const handleAddService = async () => {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newService,
+          image: '/service-default.jpg',
+          features: newService.features.filter(f => f.trim() !== '')
+        })
+      });
+      // Refresh services from backend
+      fetchServices();
+      setShowAddServiceModal(false);
+      setNewService({ title: '', category: '', badge: 'New', badgeColor: 'blue', rating: 5.0, reviews: 0, price: '', description: '', features: [] });
+      alert('Service added successfully!');
+    } catch (error) {
+      console.error('Error adding service:', error);
+      alert('Failed to add service. Please try again.');
+    }
   };
 
   const displayServices = currentPage === 'service' ? allServices : services;
