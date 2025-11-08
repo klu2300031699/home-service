@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Home.css';
 
 const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
+  console.log('Home component render - Props:', { userId, userName, userEmail, userRole });
+  
   // Backend API URLs
   const SERVICES_API = 'http://localhost:1699/api/services';
   const USERS_API = 'http://localhost:1699/api/users';
@@ -13,6 +15,8 @@ const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRo
   });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(userRole === 'admin' ? 'admin' : 'home');
+  
+  console.log('Home component state - currentPage:', currentPage);
 
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1048,7 +1052,7 @@ const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRo
                     <div className="activity-item">
                       <div className="activity-icon">📋</div>
                       <div className="activity-content">
-                        <p className="activity-text"><strong>New booking</strong> from {bookedServices.length > 0 ? bookedServices[bookedServices.length - 1].bookingDetails.fullName : 'Customer'}</p>
+                        <p className="activity-text"><strong>New booking</strong> from {bookedServices.length > 0 ? bookedServices[bookedServices.length - 1].fullName : 'Customer'}</p>
                         <span className="activity-time">2 minutes ago</span>
                       </div>
                     </div>
