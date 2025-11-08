@@ -10,9 +10,12 @@ function App() {
   const [userRole, setUserRole] = useState('user');
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState(null);
 
-  const handleLoginSuccess = (role = 'user', name = 'Gnanesh', email = 'gnanesh@gmail.com') => {
+  const handleLoginSuccess = (id = null, role = 'user', name = 'Gnanesh', email = 'gnanesh@gmail.com') => {
+    console.log('Login success:', { id, role, name, email });
     setIsLoggedIn(true);
+    setUserId(id);
     setUserRole(role);
     setUserName(name);
     setUserEmail(email);
@@ -23,12 +26,15 @@ function App() {
     setUserRole('user');
     setUserName('');
     setUserEmail('');
+    setUserId(null);
   };
+
+  console.log('App render:', { isLoggedIn, userName, userRole, userId });
 
   return (
     <div className="App">
       {isLoggedIn ? (
-        <Home userName={userName} userEmail={userEmail} userRole={userRole} onLogout={handleLogout} />
+        <Home userId={userId} userName={userName} userEmail={userEmail} userRole={userRole} onLogout={handleLogout} />
       ) : (
         <Welcome onLoginSuccess={handleLoginSuccess} />
       )}

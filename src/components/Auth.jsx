@@ -47,8 +47,8 @@ const Auth = ({ onClose, onLoginSuccess }) => {
 
         if (data.success) {
           console.log('Login successful!', data.user);
-          // Pass role, name, and email to parent component
-          onLoginSuccess(data.user.role, data.user.name, data.user.email);
+          // Pass user id, role, name, and email to parent component
+          onLoginSuccess(data.user.id, data.user.role, data.user.name, data.user.email);
         } else {
           setError(data.message || 'Invalid credentials!');
         }

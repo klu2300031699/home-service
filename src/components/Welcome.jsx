@@ -13,9 +13,9 @@ const Welcome = ({ onLoginSuccess }) => {
     setShowAuth(false);
   };
 
-  const handleLogin = (role, name, email) => {
+  const handleLogin = (id, role, name, email) => {
     setShowAuth(false);
-    onLoginSuccess(role, name, email);
+    onLoginSuccess(id, role, name, email);
   };
 
   return (

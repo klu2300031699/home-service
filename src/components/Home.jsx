@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './Home.css';
 
-const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
+const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
   // Backend API URLs
   const SERVICES_API = 'http://localhost:1699/api/services';
   const USERS_API = 'http://localhost:1699/api/users';
+  const BOOKINGS_API = 'http://localhost:1699/api/bookings';
   const [searchData, setSearchData] = useState({
     serviceName: '',
     serviceType: '',
@@ -53,7 +54,14 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
   useEffect(() => {
     fetchServices();
     fetchUsers();
+    // fetch bookings for current user or all if admin
+    fetchBookingsForCurrent();
   }, []);
+
+  useEffect(() => {
+    // when userId or role changes, refresh bookings
+    fetchBookingsForCurrent();
+  }, [userId, userRole]);
 
   const fetchServices = async () => {
     try {
@@ -81,6 +89,23 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
       setUsers([]);
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchBookingsForCurrent = async () => {
+    try {
+      if (userRole === 'admin') {
+        // Admin: fetch all bookings
+        const res = await fetch(BOOKINGS_API);
+        const data = await res.json();
+        setBookedServices(data || []);
+      } else if (userId) {
+        const res = await fetch(`${BOOKINGS_API}/user/${userId}`);
+        const data = await res.json();
+        setBookedServices(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
     }
   };
 
@@ -229,27 +254,45 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
       return;
     }
 
-    // Create booking object
-    const newBooking = {
-      id: Date.now(),
-      service: selectedService,
-      bookingDetails: { ...bookingData },
-      bookingDate: new Date().toLocaleDateString(),
-      status: 'Scheduled',
+    // Create booking payload for backend
+    const payload = {
+      user: { id: userId },
+      service: { id: selectedService?.id },
+      fullName: bookingData.fullName,
+      email: bookingData.email,
+      phone: bookingData.phone,
+      address: bookingData.address,
+      city: bookingData.city,
+      zipCode: bookingData.zipCode,
       scheduledDate: bookingData.serviceDate,
       scheduledTime: bookingData.serviceTime
     };
 
-    // Add to bookings
-    setBookedServices(prev => [...prev, newBooking]);
-
-    // Reset and close
-    handleCloseBookingModal();
-    
-    // Navigate to bookings
-    handleNavigation('bookings');
-    
-    alert('Booking confirmed successfully! Check My Bookings to view details.');
+    // Send to backend
+    (async () => {
+      try {
+        const res = await fetch(BOOKINGS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Refresh bookings from backend
+          await fetchBookingsForCurrent();
+          handleCloseBookingModal();
+          handleNavigation('bookings');
+          alert('Booking confirmed successfully! Check My Bookings to view details.');
+        } else {
+          const err = await res.json();
+          console.error('Booking failed', err);
+          alert('Booking failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error saving booking:', error);
+        alert('Unable to save booking. Make sure backend is running.');
+      }
+    })();
   };
 
   const handleViewBookingDetails = (booking) => {
@@ -266,11 +309,25 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
 
   const handleCancelBooking = (bookingId) => {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
-      setBookedServices(prev => prev.filter(booking => booking.id !== bookingId));
-      setShowBookingDetailsModal(false);
-      setSelectedBooking(null);
-      document.body.style.overflow = 'auto';
-      alert('Booking cancelled successfully!');
+      (async () => {
+        try {
+          const res = await fetch(`${BOOKINGS_API}/${bookingId}`, { method: 'DELETE' });
+          if (res.ok) {
+            await fetchBookingsForCurrent();
+            setShowBookingDetailsModal(false);
+            setSelectedBooking(null);
+            document.body.style.overflow = 'auto';
+            alert('Booking cancelled successfully!');
+          } else {
+            const err = await res.json();
+            console.error('Failed to cancel booking', err);
+            alert('Failed to cancel booking. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error cancelling booking:', error);
+          alert('Failed to cancel booking. Please try again.');
+        }
+      })();
     }
   };
 
@@ -852,46 +909,44 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                 {bookedServices.map((booking) => (
                   <div key={booking.id} className="booking-card">
                     <div className="booking-header">
-                      <span className={`booking-status status-${booking.status.toLowerCase()}`}>
-                        {booking.status}
+                      <span className={`booking-status status-${booking.status?.toLowerCase() || 'scheduled'}`}>
+                        {booking.status || 'Scheduled'}
                       </span>
-                      <span className="booking-date">Booked: {booking.bookingDate}</span>
+                      <span className="booking-date">Booked: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     
                     <div className="booking-body">
                       <div className="booking-image-wrapper">
-                        <img src={booking.service.image} alt={booking.service.title} />
+                        <img src={booking.service?.image || '/service-default.jpg'} alt={booking.service?.title || 'Service'} />
                       </div>
                       <div className="booking-details">
-                        <h3 className="booking-service-title">{booking.service.title}</h3>
-                        <p className="booking-category">{booking.service.category}</p>
-                        <p className="booking-price">{booking.service.price}</p>
+                        <h3 className="booking-service-title">{booking.service?.title || 'Service'}</h3>
+                        <p className="booking-category">{booking.service?.category || 'General'}</p>
+                        <p className="booking-price">{booking.service?.price || 'N/A'}</p>
                         
                         <div className="booking-info-row">
                           <div className="info-item">
                             <span className="info-icon">📅</span>
-                            <span>{booking.scheduledDate}</span>
+                            <span>{booking.scheduledDate || 'N/A'}</span>
                           </div>
                           <div className="info-item">
                             <span className="info-icon">🕒</span>
-                            <span>{booking.scheduledTime}</span>
+                            <span>{booking.scheduledTime || 'N/A'}</span>
                           </div>
                         </div>
 
                         <div className="booking-customer-info">
                           <div className="customer-detail">
                             <span className="detail-label">Contact:</span>
-                            <span className="detail-value">{booking.bookingDetails.phone}</span>
+                            <span className="detail-value">{booking.phone || 'N/A'}</span>
                           </div>
                           <div className="customer-detail">
                             <span className="detail-label">Location:</span>
-                            <span className="detail-value">{booking.bookingDetails.city}</span>
+                            <span className="detail-value">{booking.city || 'N/A'}</span>
                           </div>
                           <div className="customer-detail">
-                            <span className="detail-label">Urgency:</span>
-                            <span className={`urgency-badge ${booking.bookingDetails.urgency}`}>
-                              {booking.bookingDetails.urgency.charAt(0).toUpperCase() + booking.bookingDetails.urgency.slice(1)}
-                            </span>
+                            <span className="detail-label">Name:</span>
+                            <span className="detail-value">{booking.fullName || 'N/A'}</span>
                           </div>
                         </div>
                       </div>
@@ -1151,12 +1206,12 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                         {bookedServices.map(booking => (
                           <tr key={booking.id}>
                             <td>#{booking.id}</td>
-                            <td>{booking.bookingDetails.fullName}</td>
-                            <td>{booking.service.title}</td>
-                            <td>{booking.scheduledDate}</td>
-                            <td>{booking.scheduledTime}</td>
-                            <td><span className="status-badge scheduled">{booking.status}</span></td>
-                            <td><span className={`urgency-badge-admin ${booking.bookingDetails.urgency}`}>{booking.bookingDetails.urgency}</span></td>
+                            <td>{booking.fullName || 'N/A'}</td>
+                            <td>{booking.service?.title || 'N/A'}</td>
+                            <td>{booking.scheduledDate || 'N/A'}</td>
+                            <td>{booking.scheduledTime || 'N/A'}</td>
+                            <td><span className="status-badge scheduled">{booking.status || 'Scheduled'}</span></td>
+                            <td><span className="urgency-badge-admin normal">Normal</span></td>
                             <td>
                               <button className="btn-action view" onClick={() => handleViewBookingDetails(booking)}>👁️</button>
                               <button className="btn-action delete" onClick={() => handleCancelBooking(booking.id)}>🗑️</button>
@@ -1764,19 +1819,19 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                 <div className="details-grid">
                   <div className="detail-item">
                     <span className="detail-label">Service Name</span>
-                    <span className="detail-value">{selectedBooking.service.title}</span>
+                    <span className="detail-value">{selectedBooking.service?.title || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Category</span>
-                    <span className="detail-value">{selectedBooking.service.category}</span>
+                    <span className="detail-value">{selectedBooking.service?.category || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Starting Price</span>
-                    <span className="detail-value price-highlight">{selectedBooking.service.price}</span>
+                    <span className="detail-value price-highlight">{selectedBooking.service?.price || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Rating</span>
-                    <span className="detail-value">⭐ {selectedBooking.service.rating} ({selectedBooking.service.reviews} reviews)</span>
+                    <span className="detail-value">⭐ {selectedBooking.service?.rating || 0} ({selectedBooking.service?.reviews || 0} reviews)</span>
                   </div>
                 </div>
               </div>
@@ -1792,19 +1847,19 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                 <div className="details-grid">
                   <div className="detail-item">
                     <span className="detail-label">Full Name</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.fullName}</span>
+                    <span className="detail-value">{selectedBooking.fullName || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Email</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.email}</span>
+                    <span className="detail-value">{selectedBooking.email || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Phone Number</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.phone}</span>
+                    <span className="detail-value">{selectedBooking.phone || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Booking Date</span>
-                    <span className="detail-value">{selectedBooking.bookingDate}</span>
+                    <span className="detail-value">{selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -1820,15 +1875,15 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                 <div className="details-grid">
                   <div className="detail-item full-width">
                     <span className="detail-label">Street Address</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.address}</span>
+                    <span className="detail-value">{selectedBooking.address || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">City</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.city}</span>
+                    <span className="detail-value">{selectedBooking.city || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">ZIP Code</span>
-                    <span className="detail-value">{selectedBooking.bookingDetails.zipCode}</span>
+                    <span className="detail-value">{selectedBooking.zipCode || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -1844,45 +1899,44 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                 <div className="details-grid">
                   <div className="detail-item">
                     <span className="detail-label">Service Date</span>
-                    <span className="detail-value">{selectedBooking.scheduledDate}</span>
+                    <span className="detail-value">{selectedBooking.scheduledDate || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Service Time</span>
-                    <span className="detail-value">{selectedBooking.scheduledTime}</span>
+                    <span className="detail-value">{selectedBooking.scheduledTime || 'N/A'}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="detail-label">Urgency Level</span>
-                    <span className={`urgency-badge-large ${selectedBooking.bookingDetails.urgency}`}>
-                      {selectedBooking.bookingDetails.urgency === 'low' && '📅 '}
-                      {selectedBooking.bookingDetails.urgency === 'normal' && '⏰ '}
-                      {selectedBooking.bookingDetails.urgency === 'high' && '🚨 '}
-                      {selectedBooking.bookingDetails.urgency.charAt(0).toUpperCase() + selectedBooking.bookingDetails.urgency.slice(1)}
+                    <span className="detail-label">Status</span>
+                    <span className="urgency-badge-large normal">
+                      {selectedBooking.status || 'Scheduled'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Service Description */}
+              {/* Service Description - Optional if you add description field to BookingEntity */}
               <div className="details-section full-width">
                 <h3 className="details-section-title">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" fill="#4CAF50"/>
                   </svg>
-                  Service Description
+                  Additional Details
                 </h3>
                 <div className="description-box">
-                  {selectedBooking.bookingDetails.description}
+                  Booking confirmed for {selectedBooking.service?.title || 'service'} at {selectedBooking.city || 'location'}.
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="booking-details-actions">
-                <button className="btn-view-service" onClick={() => {
-                  handleCloseBookingDetailsModal();
-                  handleViewDetails(selectedBooking.service);
-                }}>
-                  View Service Details
-                </button>
+                {selectedBooking.service && (
+                  <button className="btn-view-service" onClick={() => {
+                    handleCloseBookingDetailsModal();
+                    handleViewDetails(selectedBooking.service);
+                  }}>
+                    View Service Details
+                  </button>
+                )}
                 <button className="btn-cancel-booking" onClick={() => handleCancelBooking(selectedBooking.id)}>
                   Cancel Booking
                 </button>
