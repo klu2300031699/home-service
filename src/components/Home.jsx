@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './Home.css';
 
 const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', onLogout, onNavigate }) => {
-  // Backend API URL
-  const API_URL = 'http://localhost:1699/api/services';
+  // Backend API URLs
+  const SERVICES_API = 'http://localhost:1699/api/services';
+  const USERS_API = 'http://localhost:1699/api/users';
   const [searchData, setSearchData] = useState({
     serviceName: '',
     serviceType: '',
@@ -35,31 +36,29 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
 
   // Admin states
   const [adminView, setAdminView] = useState('overview');
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Gnanesh', email: 'gnanesh@gmail.com', role: 'user', joinDate: '2025-10-15', bookings: 3 },
-    { id: 2, name: 'John Doe', email: 'john@example.com', role: 'user', joinDate: '2025-10-20', bookings: 1 },
-    { id: 3, name: 'Jane Smith', email: 'jane@example.com', role: 'user', joinDate: '2025-10-25', bookings: 2 }
-  ]);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showEditServiceModal, setShowEditServiceModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingService, setEditingService] = useState(null);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'user', joinDate: new Date().toISOString().split('T')[0], bookings: 0 });
+  const [newUser, setNewUser] = useState({ name: '', email: '', phone: '', password: '', role: 'user' });
   const [newService, setNewService] = useState({ title: '', category: '', badge: 'New', badgeColor: 'blue', rating: 5.0, reviews: 0, price: '', description: '', features: [] });
   const [allServices, setAllServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(true);
 
-  // Fetch services from backend on component mount
+  // Fetch services and users from backend on component mount
   useEffect(() => {
     fetchServices();
+    fetchUsers();
   }, []);
 
   const fetchServices = async () => {
     try {
       setServicesLoading(true);
-      const response = await fetch(API_URL);
+      const response = await fetch(SERVICES_API);
       const data = await response.json();
       setAllServices(data);
     } catch (error) {
@@ -68,6 +67,20 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
       setAllServices([]);
     } finally {
       setServicesLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const res = await fetch(USERS_API);
+      const data = await res.json();
+      setUsers(data || []);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -262,16 +275,24 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
   };
 
   // Admin functions
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(prev => prev.filter(user => user.id !== userId));
+      try {
+        await fetch(`${USERS_API}/${userId}`, { method: 'DELETE' });
+        // Refresh users from backend
+        await fetchUsers();
+        alert('User deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Failed to delete user. Please try again.');
+      }
     }
   };
 
   const handleDeleteService = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
       try {
-        await fetch(`${API_URL}/${serviceId}`, {
+        await fetch(`${SERVICES_API}/${serviceId}`, {
           method: 'DELETE'
         });
         // Refresh services from backend
@@ -295,19 +316,45 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
     setShowEditUserModal(true);
   };
 
-  const handleSaveUser = () => {
-    setUsers(prev => prev.map(user => 
-      user.id === editingUser.id ? editingUser : user
-    ));
-    setShowEditUserModal(false);
-    setEditingUser(null);
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+    try {
+      // If password is blank, don't send it so backend won't overwrite existing password
+      const payload = { ...editingUser };
+      if (!payload.password) {
+        delete payload.password;
+      }
+
+      await fetch(`${USERS_API}/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await fetchUsers();
+      setShowEditUserModal(false);
+      setEditingUser(null);
+      alert('User updated successfully!');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Failed to update user. Please try again.');
+    }
   };
 
-  const handleAddUser = () => {
-    const newId = Math.max(...users.map(u => u.id), 0) + 1;
-    setUsers(prev => [...prev, { ...newUser, id: newId }]);
-    setShowAddUserModal(false);
-    setNewUser({ name: '', email: '', role: 'user', joinDate: new Date().toISOString().split('T')[0], bookings: 0 });
+  const handleAddUser = async () => {
+    try {
+      await fetch(USERS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      await fetchUsers();
+      setShowAddUserModal(false);
+      setNewUser({ name: '', email: '', phone: '', password: '', role: 'user' });
+      alert('User added successfully!');
+    } catch (error) {
+      console.error('Error adding user:', error);
+      alert('Failed to add user. Please try again.');
+    }
   };
 
   const handleEditService = (service) => {
@@ -317,7 +364,7 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
 
   const handleSaveService = async () => {
     try {
-      await fetch(`${API_URL}/${editingService.id}`, {
+      await fetch(`${SERVICES_API}/${editingService.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -337,7 +384,7 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
 
   const handleAddService = async () => {
     try {
-      await fetch(API_URL, {
+      await fetch(SERVICES_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1937,6 +1984,34 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                     />
                   </div>
                 </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <span className="label-icon">📞</span>
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      className="premium-input"
+                      value={editingUser.phone || ''}
+                      onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <span className="label-icon">🔒</span>
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      className="premium-input"
+                      value={editingUser.password || ''}
+                      onChange={(e) => setEditingUser({...editingUser, password: e.target.value})}
+                      placeholder="Leave blank to keep current password"
+                    />
+                  </div>
+                </div>
               </div>
               
               <div className="modal-actions">
@@ -2006,7 +2081,37 @@ const Home = ({ userName, userEmail = 'gnanesh@gmail.com', userRole = 'user', on
                       required
                     />
                   </div>
-                </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">
+                        <span className="label-icon">📞</span>
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        className="premium-input"
+                        value={newUser.phone}
+                        onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label required">
+                        <span className="label-icon">🔑</span>
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        className="premium-input"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        placeholder="Set a password"
+                        required
+                      />
+                    </div>
+                  </div>
               </div>
 
               {/* Account Settings Section */}
