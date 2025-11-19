@@ -2236,145 +2236,128 @@ const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRo
         </div>
       )}
 
-      {/* Edit Service Modal */}
+      {/* Edit Service Modal - Clean Design */}
       {showEditServiceModal && editingService && (
         <div className="modal-overlay" onClick={() => setShowEditServiceModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Edit Service</h2>
-              <p className="modal-subtitle">Update service details</p>
-              <button className="close-modal" onClick={() => setShowEditServiceModal(false)}>×</button>
+          <div className="clean-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="clean-modal-header">
+              <div>
+                <h2 className="clean-modal-title">Edit Service</h2>
+                <p className="clean-modal-subtitle">Update service details</p>
+              </div>
+              <button className="clean-close-btn" onClick={() => setShowEditServiceModal(false)}>×</button>
             </div>
-            <div className="modal-body">
-              {/* Basic Information */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm-1-5h2v2H9v-2zm0-6h2v4H9V5z" fill="currentColor"/>
-                  </svg>
-                  Basic Information
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="required">Service Title</label>
-                    <input 
-                      type="text" 
-                      value={editingService.title}
-                      onChange={(e) => setEditingService({...editingService, title: e.target.value})}
-                      placeholder="Enter service title"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="required">Category</label>
-                    <select 
-                      value={editingService.category}
-                      onChange={(e) => setEditingService({...editingService, category: e.target.value})}
-                    >
-                      <option value="Repair">Repair</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Cleaning">Cleaning</option>
-                      <option value="Installation">Installation</option>
-                      <option value="Renovation">Renovation</option>
-                    </select>
-                  </div>
+            <div className="clean-modal-body">
+              <div className="clean-form-grid">
+                <div className="clean-form-group">
+                  <label className="clean-label">Service Title</label>
+                  <input 
+                    type="text" 
+                    className="clean-input"
+                    value={editingService.title}
+                    onChange={(e) => setEditingService({...editingService, title: e.target.value})}
+                    placeholder="Enter service title"
+                  />
+                </div>
+                
+                <div className="clean-form-group">
+                  <label className="clean-label">Category</label>
+                  <select 
+                    className="clean-select"
+                    value={editingService.category}
+                    onChange={(e) => setEditingService({...editingService, category: e.target.value})}
+                  >
+                    <option value="Repair">Repair</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Renovation">Renovation</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Outdoor">Outdoor</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Price Range</label>
+                  <input 
+                    type="text" 
+                    className="clean-input"
+                    value={editingService.price}
+                    onChange={(e) => setEditingService({...editingService, price: e.target.value})}
+                    placeholder="e.g., $50 - $200"
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Rating</label>
+                  <input 
+                    type="number" 
+                    className="clean-input"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={editingService.rating}
+                    onChange={(e) => setEditingService({...editingService, rating: parseFloat(e.target.value)})}
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Reviews Count</label>
+                  <input 
+                    type="number" 
+                    className="clean-input"
+                    value={editingService.reviews}
+                    onChange={(e) => setEditingService({...editingService, reviews: parseInt(e.target.value)})}
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Description</label>
+                  <textarea 
+                    className="clean-textarea"
+                    value={editingService.description}
+                    onChange={(e) => setEditingService({...editingService, description: e.target.value})}
+                    placeholder="Enter service description"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Badge Text</label>
+                  <select
+                    className="clean-select"
+                    value={editingService.badge}
+                    onChange={(e) => setEditingService({...editingService, badge: e.target.value})}
+                  >
+                    <option value="New">New</option>
+                    <option value="Popular">Popular</option>
+                    <option value="Featured">Featured</option>
+                    <option value="Top Rated">Top Rated</option>
+                    <option value="Best Value">Best Value</option>
+                  </select>
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Badge Color</label>
+                  <select 
+                    className="clean-select"
+                    value={editingService.badgeColor}
+                    onChange={(e) => setEditingService({...editingService, badgeColor: e.target.value})}
+                  >
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="red">Red</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="purple">Purple</option>
+                    <option value="orange">Orange</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Service Details */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 12H9v-2h2v2zm0-3H9V7h2v4z" fill="currentColor"/>
-                  </svg>
-                  Service Details
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="required">Price Range</label>
-                    <input 
-                      type="text" 
-                      value={editingService.price}
-                      onChange={(e) => setEditingService({...editingService, price: e.target.value})}
-                      placeholder="e.g., $50 - $200"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Rating</label>
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      min="0"
-                      max="5"
-                      value={editingService.rating}
-                      onChange={(e) => setEditingService({...editingService, rating: parseFloat(e.target.value)})}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Reviews Count</label>
-                    <input 
-                      type="number" 
-                      value={editingService.reviews}
-                      onChange={(e) => setEditingService({...editingService, reviews: parseInt(e.target.value)})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea 
-                      value={editingService.description}
-                      onChange={(e) => setEditingService({...editingService, description: e.target.value})}
-                      placeholder="Enter service description"
-                      rows="3"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Badge Settings */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" fill="currentColor"/>
-                  </svg>
-                  Badge Settings
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Badge Text</label>
-                    <select
-                      value={editingService.badge}
-                      onChange={(e) => setEditingService({...editingService, badge: e.target.value})}
-                    >
-                      <option value="Popular">Popular</option>
-                      <option value="New">New</option>
-                      <option value="Trending">Trending</option>
-                      <option value="Top Rated">Top Rated</option>
-                      <option value="Best Value">Best Value</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Badge Color</label>
-                    <select 
-                      className="color-select"
-                      value={editingService.badgeColor}
-                      onChange={(e) => setEditingService({...editingService, badgeColor: e.target.value})}
-                    >
-                      <option value="blue">Blue</option>
-                      <option value="green">Green</option>
-                      <option value="red">Red</option>
-                      <option value="yellow">Yellow</option>
-                    </select>
-                    <div className={`badge-preview badge-${editingService.badgeColor}`}>
-                      {editingService.badge}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => setShowEditServiceModal(false)}>Cancel</button>
-                <button className="btn-save" onClick={handleSaveService}>
+              <div className="clean-modal-actions">
+                <button className="clean-btn-cancel" onClick={() => setShowEditServiceModal(false)}>
+                  Cancel
+                </button>
+                <button className="clean-btn-submit" onClick={handleSaveService}>
                   Save Changes
                 </button>
               </div>
@@ -2383,129 +2366,108 @@ const Home = ({ userId = null, userName, userEmail = 'gnanesh@gmail.com', userRo
         </div>
       )}
 
-      {/* Add Service Modal */}
+      {/* Add Service Modal - Clean Design */}
       {showAddServiceModal && (
         <div className="modal-overlay" onClick={() => setShowAddServiceModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Add New Service</h2>
-              <p className="modal-subtitle">Create a new service offering</p>
-              <button className="close-modal" onClick={() => setShowAddServiceModal(false)}>×</button>
+          <div className="clean-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="clean-modal-header">
+              <div>
+                <h2 className="clean-modal-title">Add New Service</h2>
+                <p className="clean-modal-subtitle">Create a new service offering</p>
+              </div>
+              <button className="clean-close-btn" onClick={() => setShowAddServiceModal(false)}>×</button>
             </div>
-            <div className="modal-body">
-              {/* Basic Information Section */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm-1-5h2v2H9v-2zm0-6h2v4H9V5z" fill="currentColor"/>
-                  </svg>
-                  Basic Information
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="required">Service Title</label>
-                    <input 
-                      type="text" 
-                      value={newService.title}
-                      onChange={(e) => setNewService({...newService, title: e.target.value})}
-                      placeholder="Enter service title"
-                    />
-                    <p className="help-text">Choose a clear, descriptive name for your service</p>
-                  </div>
-                  <div className="form-group">
-                    <label className="required">Category</label>
-                    <select 
-                      value={newService.category}
-                      onChange={(e) => setNewService({...newService, category: e.target.value})}
-                    >
-                      <option value="">Select Category</option>
-                      <option value="Repair">Repair</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Cleaning">Cleaning</option>
-                      <option value="Installation">Installation</option>
-                      <option value="Renovation">Renovation</option>
-                    </select>
-                  </div>
+            <div className="clean-modal-body">
+              <div className="clean-form-grid">
+                <div className="clean-form-group">
+                  <label className="clean-label">Service Title</label>
+                  <input 
+                    type="text" 
+                    className="clean-input"
+                    value={newService.title}
+                    onChange={(e) => setNewService({...newService, title: e.target.value})}
+                    placeholder="Enter service title"
+                  />
+                  <p className="clean-help-text">Choose a clear, descriptive name for your service</p>
+                </div>
+                
+                <div className="clean-form-group">
+                  <label className="clean-label">Category</label>
+                  <select 
+                    className="clean-select"
+                    value={newService.category}
+                    onChange={(e) => setNewService({...newService, category: e.target.value})}
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Repair">Repair</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Renovation">Renovation</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Outdoor">Outdoor</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Price Range</label>
+                  <input 
+                    type="text" 
+                    className="clean-input"
+                    value={newService.price}
+                    onChange={(e) => setNewService({...newService, price: e.target.value})}
+                    placeholder="e.g., $50 - $200"
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Description</label>
+                  <textarea 
+                    className="clean-textarea"
+                    value={newService.description}
+                    onChange={(e) => setNewService({...newService, description: e.target.value})}
+                    placeholder="Enter service description"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Badge Text</label>
+                  <select
+                    className="clean-select"
+                    value={newService.badge}
+                    onChange={(e) => setNewService({...newService, badge: e.target.value})}
+                  >
+                    <option value="New">New</option>
+                    <option value="Popular">Popular</option>
+                    <option value="Featured">Featured</option>
+                    <option value="Top Rated">Top Rated</option>
+                    <option value="Best Value">Best Value</option>
+                  </select>
+                </div>
+
+                <div className="clean-form-group">
+                  <label className="clean-label">Badge Color</label>
+                  <select 
+                    className="clean-select"
+                    value={newService.badgeColor}
+                    onChange={(e) => setNewService({...newService, badgeColor: e.target.value})}
+                  >
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="red">Red</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="purple">Purple</option>
+                    <option value="orange">Orange</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Pricing and Description */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 12H9v-2h2v2zm0-3H9V7h2v4z" fill="currentColor"/>
-                  </svg>
-                  Service Details
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="required">Price Range</label>
-                    <input 
-                      type="text" 
-                      value={newService.price}
-                      onChange={(e) => setNewService({...newService, price: e.target.value})}
-                      placeholder="e.g., $50 - $200"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea 
-                      value={newService.description}
-                      onChange={(e) => setNewService({...newService, description: e.target.value})}
-                      placeholder="Enter service description"
-                      rows="3"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Badge Settings */}
-              <div className="form-section">
-                <h3 className="section-title">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" fill="currentColor"/>
-                  </svg>
-                  Badge Settings
-                </h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Badge Text</label>
-                    <select
-                      value={newService.badge}
-                      onChange={(e) => setNewService({...newService, badge: e.target.value})}
-                    >
-                      <option value="New">New</option>
-                      <option value="Popular">Popular</option>
-                      <option value="Featured">Featured</option>
-                      <option value="Top Rated">Top Rated</option>
-                      <option value="Best Value">Best Value</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Badge Color</label>
-                    <select 
-                      className="color-select"
-                      value={newService.badgeColor}
-                      onChange={(e) => setNewService({...newService, badgeColor: e.target.value})}
-                    >
-                      <option value="blue">Blue</option>
-                      <option value="green">Green</option>
-                      <option value="red">Red</option>
-                      <option value="yellow">Yellow</option>
-                    </select>
-                    <div className={`badge-preview badge-${newService.badgeColor}`}>
-                      {newService.badge}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => setShowAddServiceModal(false)}>
+              <div className="clean-modal-actions">
+                <button className="clean-btn-cancel" onClick={() => setShowAddServiceModal(false)}>
                   Cancel
                 </button>
                 <button 
-                  className="btn-save" 
+                  className="clean-btn-submit" 
                   onClick={handleAddService}
                   disabled={!newService.title || !newService.category || !newService.price}
                 >
